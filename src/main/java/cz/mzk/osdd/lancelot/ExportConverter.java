@@ -92,13 +92,13 @@ public class ExportConverter {
         proarcArchivePack.processAudit();
         proarcArchivePack.processDescription();
         proarcArchivePack.processFoxml();
-//        proarcArchivePack.processFull();
-//        proarcArchivePack.processNDKArchival();
-//        proarcArchivePack.processNDKUser();
-//        proarcArchivePack.processPreview();
-//        proarcArchivePack.processRaw();
+        proarcArchivePack.processFull();
+        proarcArchivePack.processNDKArchival();
+        proarcArchivePack.processNDKUser();
+        proarcArchivePack.processPreview();
+        proarcArchivePack.processRaw();
 //        proarcArchivePack.processReslExt();
-//        proarcArchivePack.processThumbnail();
+        proarcArchivePack.processThumbnail();
 //        proarcArchivePack.processMets();
     }
 }

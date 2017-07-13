@@ -16,9 +16,13 @@ public class Messages {
     public static final String INVALID_K4_AUDIT_TRAIL_COUNT = "Kramerius export cannot contain more than one auditTrail element within foxml.";
     public static final String INVALID_K4_FORMAT_MODEL = "Kramerius export must contain hasModel element with \"model:****\" value.";
     public static final String INVALID_K4_FORMAT_MODEL_CONTENT = "Receiving K4 model from foxml failed.";
-    public static final String INVALID_K4_FORMAT_MODEL_ATTRIBUTE = "Kramerius export must contain rdf:resource attribute within hasModel element.";
+    public static final String INVALID_K4_FORMAT_MODEL_RDF_RESOURCE_ATTRIBUTE = "Kramerius export must contain rdf:resource attribute within hasModel element.";
+    public static final String INVALID_K4_FORMAT_MODEL_TILES_URL_COUNT = "Kramerius export must contain single tiles-url element.";
 
     public static final String NULL_ARGUMENT_KRAMERIUS = "KrameriusExportLocation cannot be null.";
     public static final String NULL_ARGUMENT_PROARC = "ProarcArchiveLocation cannot be null.";
 
+    public static final String DOWNLOAD_STARTED = "Started downloading file:";
+    public static final String DOWNLOAD_FINISHED = " ... done";
+    public static final String DOWNLOAD_FAILED = " ... failed";
 }

@@ -4,6 +4,7 @@ import cz.mzk.osdd.lancelot.device.DeviceMock;
 import cz.mzk.osdd.lancelot.utils.Messages;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +27,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
+ * Transforms K4 (5.3.6) Export (with IS) into ProArc (3.3) archive pack
+ *
  * @author Jakub Kremlacek
  */
 public class ProarcArchivePack {
@@ -43,6 +46,19 @@ public class ProarcArchivePack {
     public static final String RELS_EXT_DIR_NAME = "RELS-EXT";
     public static final String THUMBNAIL_DIR_NAME = "THUMBNAIL";
 
+    private static final String FULL_FILE_SUFFIX = ".jpg";
+    private static final String NDK_ARCHIVAL_FILE_SUFFIX = ".jp2";
+    private static final String NDK_USER_FILE_SUFFIX = ".jp2";
+    private static final String PREVIEW_FILE_SUFFIX = ".jpg";
+    private static final String RAW_FILE_SUFFIX = ".jpg";
+    private static final String THUMBNAIL_FILE_SUFFIX = ".jpg";
+
+    private static final String FULL_URL_SUFFIX = "/full/full/0/native.jpg";
+    private static final String NDK_ARCHIVAL_URL_SUFFIX = "/original";
+    private static final String NDK_USER_URL_SUFFIX = "/original";
+    private static final String PREVIEW_URL_SUFFIX = "/preview.jpg";
+    private static final String RAW_URL_SUFFIX = "/big.jpg";
+    private static final String THUMBNAIL_URL_SUFFIX = "/thumb.jpg";
 
     private final File krameriusExportLocation;
     private final File proarcArchiveLocation;
@@ -67,6 +83,29 @@ public class ProarcArchivePack {
 
     private DocumentBuilder documentBuilder;
 
+    /**
+     * Loads K4 export into memory preparing the pack for further processing via process* methods
+     *
+     * @param proarcArchiveLocation output location
+     * @param krameriusExportLocation input location
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public ProarcArchivePack(File proarcArchiveLocation, File krameriusExportLocation) throws ParserConfigurationException, SAXException, IOException {
+        this(proarcArchiveLocation, krameriusExportLocation, null);
+    }
+
+    /**
+     * Loads K4 export into memory preparing the pack for further processing via process* methods. Enables specifying scanning device UUID
+     *
+     * @param proarcArchiveLocation output location
+     * @param krameriusExportLocation input location
+     * @param deviceUUID specific UUID of scanning device to be mocked for processed documents
+     * @throws IOException when reading K4 fails
+     * @throws ParserConfigurationException note DOM exceptions for parsing XML
+     * @throws SAXException note DOM exceptions for parsing XML
+     */
     public ProarcArchivePack(File proarcArchiveLocation, File krameriusExportLocation, String deviceUUID) throws IOException, ParserConfigurationException, SAXException {
         if (proarcArchiveLocation == null) throw new IllegalArgumentException(Messages.NULL_ARGUMENT_PROARC);
         if (krameriusExportLocation == null) throw new IllegalArgumentException(Messages.NULL_ARGUMENT_KRAMERIUS);
@@ -97,23 +136,7 @@ public class ProarcArchivePack {
         loadFoxmls();
     }
 
-    private void loadFoxmls() throws IllegalArgumentException, ParserConfigurationException, IOException, SAXException {
-        File[] files = krameriusExportLocation.listFiles();
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                throw new IllegalArgumentException(Messages.INVALID_K4_FORMAT_DIRECTORY);
-            }
-
-            //put processed k4foxml to map
-
-            K4Foxml k4Foxml = new K4Foxml(file);
-            k4FoxmlMap.put(k4Foxml.getOutputFilename(), k4Foxml);
-        }
-    }
-
     public void processAudit() throws TransformerException, IOException {
-
         AUDIT_DIR.mkdirs();
 
         for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
@@ -147,7 +170,6 @@ public class ProarcArchivePack {
     }
 
     public void processFoxml() throws IOException, TransformerException, ParserConfigurationException, SAXException {
-
         FOXML_DIR.mkdirs();
 
         for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
@@ -256,7 +278,7 @@ public class ProarcArchivePack {
 
             removeElementWithName(outDoc, "itemID");
 
-            //datastream ID=POLICY remove
+            //datastream ID=POLICY remove (note that DOM getElementWithId does not work)
 
             removeElementWithID(outDoc, "POLICY", "datastream");
 
@@ -273,6 +295,94 @@ public class ProarcArchivePack {
         }
 
         DeviceMock.generateFOXML(FOXML_DIR, deviceUUID);
+    }
+
+    public void processFull() throws IOException {
+        downloadImages(
+                FULL_URL_SUFFIX,
+                FULL_DIR,
+                FULL_FILE_SUFFIX
+        );
+    }
+
+    public void processNDKArchival() throws IOException {
+        downloadImages(
+                NDK_ARCHIVAL_URL_SUFFIX,
+                NDK_ARCHIVAL_DIR,
+                NDK_ARCHIVAL_FILE_SUFFIX
+        );
+    }
+
+    public void processNDKUser() throws IOException {
+        downloadImages(
+                NDK_USER_URL_SUFFIX,
+                NDK_USER_DIR,
+                NDK_USER_FILE_SUFFIX
+        );
+    }
+
+    public void processPreview() throws IOException {
+        downloadImages(
+                PREVIEW_URL_SUFFIX,
+                PREVIEW_DIR,
+                PREVIEW_FILE_SUFFIX
+        );
+    }
+
+
+    public void processRaw() throws IOException {
+        downloadImages(
+                RAW_URL_SUFFIX,
+                RAW_DIR,
+                RAW_FILE_SUFFIX
+        );
+    }
+
+    public void processThumbnail() throws IOException {
+        downloadImages(
+                THUMBNAIL_URL_SUFFIX,
+                THUMBNAIL_DIR,
+                THUMBNAIL_FILE_SUFFIX
+        );
+    }
+
+    private void loadFoxmls() throws IllegalArgumentException, ParserConfigurationException, IOException, SAXException {
+        File[] files = krameriusExportLocation.listFiles();
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                throw new IllegalArgumentException(Messages.INVALID_K4_FORMAT_DIRECTORY);
+            }
+
+            //put processed k4foxml to map
+
+            K4Foxml k4Foxml = new K4Foxml(file);
+            k4FoxmlMap.put(k4Foxml.getOutputFilename(), k4Foxml);
+        }
+    }
+
+    private void downloadImages(String url, File fileDir, String fileSuffix) throws IOException {
+        for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
+            String imageUrl = loadImageInfo(foxml.getValue());
+
+            //if foxml is not containing image links skip it
+            if (imageUrl == null) continue;
+
+            URL fullUrl = new URL(imageUrl + url);
+
+            System.out.print(Messages.DOWNLOAD_STARTED + " " + fullUrl.toString() + " ");
+
+            try {
+                FileUtils.copyURLToFile(fullUrl, new File(fileDir, foxml.getValue().getOutputFilename(fileSuffix)));
+            } catch (IOException e) {
+                System.out.println(Messages.DOWNLOAD_FAILED);
+                System.out.flush();
+
+                throw new IOException(e.getMessage());
+            }
+
+            System.out.println(Messages.DOWNLOAD_FINISHED);
+        }
     }
 
     private void saveDocument(Document doc, File outputFile, Boolean omitXMLStandalone) throws TransformerException {
@@ -312,5 +422,21 @@ public class ProarcArchivePack {
                 removeElement((Element) list.item(i));
             }
         }
+    }
+
+    private String loadImageInfo(K4Foxml foxml) {
+        Document doc = foxml.document;
+
+        if (!K4Foxml.MODELS_WITH_IMAGES.contains(foxml.type)) {
+            return null;
+        }
+
+        NodeList tilesUrlList = doc.getElementsByTagName("tiles-url");
+
+        if (tilesUrlList.getLength() != 1) {
+            throw new IllegalArgumentException(Messages.INVALID_K4_FORMAT_MODEL_TILES_URL_COUNT);
+        }
+
+        return tilesUrlList.item(0).getTextContent();
     }
 }

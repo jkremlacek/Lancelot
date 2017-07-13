@@ -3,7 +3,9 @@ package cz.mzk.osdd.lancelot;
 import cz.mzk.osdd.lancelot.utils.Messages;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -23,6 +25,10 @@ public class K4Foxml {
     public static final String PROARC_DEVICE = "device";
     public static final String PROARC_MAP = "ndkmap";
     public static final String PROARC_PAGE = "page";
+
+    public static final List<String> MODELS_WITH_IMAGES = new ArrayList<String>() {{
+        add(K4Foxml.K4_PAGE);
+    }};
 
     public static final String OUTPUT_FILE_SUFFIX = ".xml";
 
@@ -53,7 +59,7 @@ public class K4Foxml {
         Node n = modelList.item(0).getAttributes().getNamedItem("rdf:resource");
 
         if (n == null) {
-            throw new IllegalArgumentException(Messages.INVALID_K4_FORMAT_MODEL_ATTRIBUTE + " File: " + file.getName());
+            throw new IllegalArgumentException(Messages.INVALID_K4_FORMAT_MODEL_RDF_RESOURCE_ATTRIBUTE + " File: " + file.getName());
         }
 
         String textContent = n.getNodeValue();
@@ -97,8 +103,12 @@ public class K4Foxml {
         return null;
     }
 
+    public String getOutputFilename(String suffix) {
+        return type + "_" + String.format("%04d", index) + "_" + filename + suffix;
+    }
+
     public String getOutputFilename() {
-        return type + "_" + String.format("%04d", index) + "_" + filename + OUTPUT_FILE_SUFFIX;
+        return getOutputFilename(OUTPUT_FILE_SUFFIX);
     }
 
     public K4Foxml load(File file) throws IOException, SAXException, ParserConfigurationException {
