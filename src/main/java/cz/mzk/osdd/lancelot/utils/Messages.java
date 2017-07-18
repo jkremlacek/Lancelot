@@ -25,4 +25,7 @@ public class Messages {
     public static final String DOWNLOAD_STARTED = "Started downloading file:";
     public static final String DOWNLOAD_FINISHED = " ... done";
     public static final String DOWNLOAD_FAILED = " ... failed";
+
+    public static final String IMAGE_RESOLUTION_UNIT_NOT_EQUAL = "Image does not contain same resolution unit for x and y axis.";
+    public static final String IMAGE_SAMPLING_TYPE_NOT_SUPPORTED = "Image contains BitsPerComponent with unsupported number type.";
 }

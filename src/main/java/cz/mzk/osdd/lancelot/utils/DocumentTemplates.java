@@ -1,9 +1,9 @@
-package cz.mzk.osdd.lancelot.device;
+package cz.mzk.osdd.lancelot.utils;
 
 /**
  * @author Jakub Kremlacek
  */
-public class DeviceTextContentConstants {
+public class DocumentTemplates {
     public static final String AUDIT =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><audit:auditTrail xmlns:audit=\"info:fedora/fedora-system:def/audit#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
                     "    <audit:record ID=\"AUDREC1\">\n" +
@@ -45,6 +45,52 @@ public class DeviceTextContentConstants {
                     "        </mix:DigitalCameraCapture>\n" +
                     "    </mix:ImageCaptureMetadata>\n" +
                     "</mix:mix>";
+
+    public static final String MIX_CONTENT =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                    "<mix:mix xmlns:mix=\"http://www.loc.gov/mix/v20\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
+            "    <mix:BasicDigitalObjectInformation>\n" +
+            "        <mix:ObjectIdentifier>\n" +
+            "            <mix:objectIdentifierType>JHOVE</mix:objectIdentifierType>\n" +
+            "                        </mix:ObjectIdentifier>\n" +
+            "        <mix:FormatDesignation>\n" +
+            "            <mix:formatName>image/jp2</mix:formatName>\n" +
+            "            <mix:formatVersion>1.0</mix:formatVersion>\n" +
+            "                        </mix:FormatDesignation>\n" +
+            "        <mix:byteOrder>big endian</mix:byteOrder>\n" +
+            "        <mix:Compression>\n" +
+            "            <mix:compressionScheme>JPEG 2000</mix:compressionScheme>\n" +
+            "                        </mix:Compression>\n" +
+            "                    </mix:BasicDigitalObjectInformation>\n" +
+            "    <mix:BasicImageInformation>\n" +
+            "        <mix:BasicImageCharacteristics>\n" +
+            "            <mix:imageWidth>12025</mix:imageWidth>\n" +
+            "            <mix:imageHeight>10187</mix:imageHeight>\n" +
+            "                        </mix:BasicImageCharacteristics>\n" +
+            "                    </mix:BasicImageInformation>\n" +
+            "    <mix:ImageAssessmentMetadata>\n" +
+            "        <mix:SpatialMetrics>\n" +
+            "            <mix:samplingFrequencyUnit>cm</mix:samplingFrequencyUnit>\n" +
+            "            <mix:xSamplingFrequency>\n" +
+            "                <mix:numerator>6000000</mix:numerator>\n" +
+            "                <mix:denominator>25400</mix:denominator>\n" +
+            "                            </mix:xSamplingFrequency>\n" +
+            "            <mix:ySamplingFrequency>\n" +
+            "                <mix:numerator>6000000</mix:numerator>\n" +
+            "                <mix:denominator>25400</mix:denominator>\n" +
+            "                            </mix:ySamplingFrequency>\n" +
+            "                        </mix:SpatialMetrics>\n" +
+            "        <mix:ImageColorEncoding>\n" +
+            "            <mix:BitsPerSample>\n" +
+            "                <mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>\n" +
+            "                <mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>\n" +
+            "                <mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>\n" +
+            "                <mix:bitsPerSampleUnit>integer</mix:bitsPerSampleUnit>\n" +
+            "                            </mix:BitsPerSample>\n" +
+            "            <mix:samplesPerPixel>3</mix:samplesPerPixel>\n" +
+            "                        </mix:ImageColorEncoding>\n" +
+            "                    </mix:ImageAssessmentMetadata>\n" +
+            "                </mix:mix>";
 
     public static String getFoxml(String uuid) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +

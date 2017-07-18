@@ -1,12 +1,17 @@
 package cz.mzk.osdd.lancelot;
 
 import cz.mzk.osdd.lancelot.device.DeviceMock;
+import cz.mzk.osdd.lancelot.utils.DocumentTemplates;
+import cz.mzk.osdd.lancelot.utils.DocumentUtils;
+import cz.mzk.osdd.lancelot.utils.ImageMetadataLoader;
 import cz.mzk.osdd.lancelot.utils.Messages;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -20,6 +25,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -50,14 +56,15 @@ public class ProarcArchivePack {
     private static final String NDK_ARCHIVAL_FILE_SUFFIX = ".jp2";
     private static final String NDK_USER_FILE_SUFFIX = ".jp2";
     private static final String PREVIEW_FILE_SUFFIX = ".jpg";
-    private static final String RAW_FILE_SUFFIX = ".jpg";
+    private static final String RAW_FILE_SUFFIX = ".jp2";
     private static final String THUMBNAIL_FILE_SUFFIX = ".jpg";
+    private static final String XML_FILE_SUFFIX = ".xml";
 
     private static final String FULL_URL_SUFFIX = "/full/full/0/native.jpg";
     private static final String NDK_ARCHIVAL_URL_SUFFIX = "/original";
     private static final String NDK_USER_URL_SUFFIX = "/original";
     private static final String PREVIEW_URL_SUFFIX = "/preview.jpg";
-    private static final String RAW_URL_SUFFIX = "/big.jpg";
+    private static final String RAW_URL_SUFFIX = "/original";
     private static final String THUMBNAIL_URL_SUFFIX = "/thumb.jpg";
 
     private final File krameriusExportLocation;
@@ -311,6 +318,8 @@ public class ProarcArchivePack {
                 NDK_ARCHIVAL_DIR,
                 NDK_ARCHIVAL_FILE_SUFFIX
         );
+
+        //TODO: generate MIX
     }
 
     public void processNDKUser() throws IOException {
@@ -330,12 +339,14 @@ public class ProarcArchivePack {
     }
 
 
-    public void processRaw() throws IOException {
-        downloadImages(
+    public void processRaw() throws IOException, TransformerException, ParserConfigurationException, SAXException {
+        List<File> images = downloadImages(
                 RAW_URL_SUFFIX,
                 RAW_DIR,
                 RAW_FILE_SUFFIX
         );
+
+        generateMix(RAW_MIX_DIR, images);
     }
 
     public void processThumbnail() throws IOException {
@@ -344,6 +355,18 @@ public class ProarcArchivePack {
                 THUMBNAIL_DIR,
                 THUMBNAIL_FILE_SUFFIX
         );
+    }
+
+    private void generateMix(File rawMixDir, List<File> images) throws TransformerException, ParserConfigurationException, SAXException, IOException {
+        rawMixDir.mkdirs();
+
+        ImageMetadataLoader iml = new ImageMetadataLoader();
+
+        for (File image : images) {
+            Document mixDoc = generateMixDocument(iml.getMetadataFromImage(image));
+
+            saveDocument(mixDoc, new File(rawMixDir, FilenameUtils.removeExtension(image.getName()) + XML_FILE_SUFFIX), true);
+        }
     }
 
     private void loadFoxmls() throws IllegalArgumentException, ParserConfigurationException, IOException, SAXException {
@@ -361,27 +384,42 @@ public class ProarcArchivePack {
         }
     }
 
-    private void downloadImages(String url, File fileDir, String fileSuffix) throws IOException {
-        for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
-            String imageUrl = loadImageInfo(foxml.getValue());
+    private void removeElement(Element element) {
+        if (element != null) {
+            Node parent = element.getParentNode();
+            parent.removeChild(element);
+        }
+    }
 
-            //if foxml is not containing image links skip it
-            if (imageUrl == null) continue;
+    private void removeElementWithID(Document doc, String id, String name) {
+        NodeList list = doc.getElementsByTagName(name);
 
-            URL fullUrl = new URL(imageUrl + url);
-
-            System.out.print(Messages.DOWNLOAD_STARTED + " " + fullUrl.toString() + " ");
-
-            try {
-                FileUtils.copyURLToFile(fullUrl, new File(fileDir, foxml.getValue().getOutputFilename(fileSuffix)));
-            } catch (IOException e) {
-                System.out.println(Messages.DOWNLOAD_FAILED);
-                System.out.flush();
-
-                throw new IOException(e.getMessage());
+        for (int i = 0; i < list.getLength(); i++) {
+            if (((Element) list.item(i)).getAttribute("ID").equals(id)) {
+                removeElement((Element) list.item(i));
             }
+        }
+    }
 
-            System.out.println(Messages.DOWNLOAD_FINISHED);
+    private void removeElementWithName(Document doc, String tagName) {
+        Element element = (Element) doc.getElementsByTagName(tagName).item(0);
+
+        removeElement(element);
+    }
+
+    private void setElementTextContent(Document outDoc, String content, String elementTag) {
+        outDoc.getElementsByTagName(elementTag).item(0).setTextContent(content);
+    }
+
+    private void setElementTextContent(Document outDoc, String content, String elementTag, String parentTag) {
+        Element parent = (Element) outDoc.getElementsByTagName(parentTag).item(0);
+
+        NodeList children = parent.getChildNodes();
+
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i).getLocalName() != null && children.item(i).getLocalName().equals(elementTag)) {
+                children.item(i).setTextContent(content);
+            }
         }
     }
 
@@ -401,27 +439,88 @@ public class ProarcArchivePack {
         transformer.transform(domSource, output);
     }
 
-    private void removeElementWithName(Document doc, String tagName) {
-        Element element = (Element) doc.getElementsByTagName(tagName).item(0);
+    private Document generateMixDocument(Document imageData) throws IOException, SAXException, ParserConfigurationException {
+        Document outDoc = DocumentUtils.loadDocumentFromString(DocumentTemplates.MIX_CONTENT);
 
-        removeElement(element);
-    }
+        Element data = (Element) imageData.getElementsByTagName("rdf:Description") .item(0);
 
-    private void removeElement(Element element) {
-        if (element != null) {
-            Node parent = element.getParentNode();
-            parent.removeChild(element);
+        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:ImageWidth"), "mix:imageWidth");
+        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:ImageHeight"), "mix:imageHeight");
+
+        //denominator element is not used as it is not used in demo document at
+        //http://www.loc.gov/standards/mix/instances/test_mix10.xml
+
+        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureXResolution"), "mix:numerator", "mix:xSamplingFrequency");
+        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureYResolution"), "mix:numerator", "mix:ySamplingFrequency");
+
+        //removing denominators from template since exact value is used
+
+        NodeList denominators = outDoc.getElementsByTagName("mix:denominator");
+
+        while (denominators.getLength() > 0) {
+            Node parent = denominators.item(0).getParentNode();
+            parent.removeChild(denominators.item(0));
         }
+
+        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureXResolutionUnit"), "mix:samplingFrequencyUnit");
+
+        if (!data.getAttribute("Jpeg2000:CaptureXResolutionUnit").equals(data.getAttribute("Jpeg2000:CaptureYResolutionUnit"))) {
+            throw new IllegalArgumentException(Messages.IMAGE_RESOLUTION_UNIT_NOT_EQUAL + " Image: " + data.getAttribute("rdf:about"));
+        }
+
+        String[] bitsPerComponentString = data.getAttribute("Jpeg2000:BitsPerComponent").split("\\s+");
+
+        String numberType = bitsPerComponentString[2].toLowerCase();
+
+        if (!numberType.equals("integer") && !numberType.equals("unsigned")) {
+            throw new IllegalArgumentException(Messages.IMAGE_SAMPLING_TYPE_NOT_SUPPORTED + "Image: " + data.getAttribute("rdf:about") + " Number type: " + numberType);
+        }
+
+        Integer samplesPerPixel = Integer.parseInt(data.getAttribute("Jpeg2000:NumberOfComponents"));
+
+        setElementTextContent(outDoc, samplesPerPixel.toString(), "mix:samplesPerPixel");
+
+        Integer bitCount = Integer.parseInt(bitsPerComponentString[0]);
+
+        NodeList bpsv = outDoc.getElementsByTagName("bitsPerSampleValue");
+
+        for (int i = 0; i < bpsv.getLength(); i++) {
+            bpsv.item(i).setTextContent(bitCount.toString());
+        }
+
+        return outDoc;
     }
 
-    private void removeElementWithID(Document doc, String id, String name) {
-        NodeList list = doc.getElementsByTagName(name);
+    private List<File> downloadImages(String url, File fileDir, String fileSuffix) throws IOException {
+        List<File> imageFiles = new ArrayList();
 
-        for (int i = 0; i < list.getLength(); i++) {
-            if (((Element) list.item(i)).getAttribute("ID").equals(id)) {
-                removeElement((Element) list.item(i));
+        for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
+            String imageUrl = loadImageInfo(foxml.getValue());
+
+            //if foxml is not containing image links skip it
+            if (imageUrl == null) continue;
+
+            URL fullUrl = new URL(imageUrl + url);
+
+            System.out.print(Messages.DOWNLOAD_STARTED + " " + fullUrl.toString() + " ");
+
+            try {
+                File image = new File(fileDir, foxml.getValue().getOutputFilename(fileSuffix));
+
+                FileUtils.copyURLToFile(fullUrl, image);
+
+                imageFiles.add(image);
+            } catch (IOException e) {
+                System.out.println(Messages.DOWNLOAD_FAILED);
+                System.out.flush();
+
+                throw new IOException(e.getMessage());
             }
+
+            System.out.println(Messages.DOWNLOAD_FINISHED);
         }
+
+        return imageFiles;
     }
 
     private String loadImageInfo(K4Foxml foxml) {
