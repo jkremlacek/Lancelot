@@ -97,7 +97,7 @@ public class ExportConverter {
         proarcArchivePack.processNDKUser();
         proarcArchivePack.processPreview();
         proarcArchivePack.processRaw();
-//        proarcArchivePack.processReslExt();
+//        proarcArchivePack.processRelsExt();
         proarcArchivePack.processThumbnail();
 //        proarcArchivePack.processMets();
     }
