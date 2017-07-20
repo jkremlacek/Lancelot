@@ -89,16 +89,48 @@ public class ExportConverter {
     private void runPackTransformation(File proarcLocation, File krameriusLocation) throws ParserConfigurationException, SAXException, IOException, TransformerException {
         ProarcArchivePack proarcArchivePack = new ProarcArchivePack(proarcLocation, krameriusLocation, deviceUUID);
 
+        Messages.reportProcessState(Messages.PROCESS_AUDIT_NAME, true);
         proarcArchivePack.processAudit();
+        Messages.reportProcessState(Messages.PROCESS_AUDIT_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_DESCRIPTION_NAME, true);
         proarcArchivePack.processDescription();
-        proarcArchivePack.processFoxml();
-        proarcArchivePack.processFull();
+        Messages.reportProcessState(Messages.PROCESS_DESCRIPTION_NAME, false);
+
+        //Messages.reportProcessState(Messages.PROCESS_FULL_NAME, true);
+        //proarcArchivePack.processFull();
+        //Messages.reportProcessState(Messages.PROCESS_FULL_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_NDK_ARCHIVAL_NAME, true);
         proarcArchivePack.processNDKArchival();
+        Messages.reportProcessState(Messages.PROCESS_NDK_ARCHIVAL_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_NDK_USER_NAME, true);
         proarcArchivePack.processNDKUser();
+        Messages.reportProcessState(Messages.PROCESS_NDK_USER_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_PREVIEW_NAME, true);
         proarcArchivePack.processPreview();
+        Messages.reportProcessState(Messages.PROCESS_PREVIEW_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_RAW_NAME, true);
         proarcArchivePack.processRaw();
-//        proarcArchivePack.processRelsExt();
+        Messages.reportProcessState(Messages.PROCESS_RAW_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_RELS_EXT_NAME, true);
+        proarcArchivePack.processRelsExt();
+        Messages.reportProcessState(Messages.PROCESS_RELS_EXT_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_THUMBNAIL_NAME, true);
         proarcArchivePack.processThumbnail();
-//        proarcArchivePack.processMets();
+        Messages.reportProcessState(Messages.PROCESS_THUMBNAIL_NAME, false);
+
+        Messages.reportProcessState(Messages.PROCESS_FOXML_NAME, true);
+        proarcArchivePack.processFoxml();
+        Messages.reportProcessState(Messages.PROCESS_FOXML_NAME, false);
+
+        //Messages.reportProcessState(Messages.PROCESS_METS_NAME, true);
+        //proarcArchivePack.processMets();
+        //Messages.reportProcessState(Messages.PROCESS_METS_NAME, false);
     }
 }

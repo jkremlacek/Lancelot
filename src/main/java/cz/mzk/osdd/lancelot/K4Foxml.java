@@ -11,6 +11,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -34,8 +35,11 @@ public class K4Foxml {
 
     public final Document document;
     public final Integer index;
+
+    //String representing type transformed into Proarc variant
     public final String type;
     public final String filename;
+    public final String createdDate;
 
     //foxmltype, # of occurences
     private static Map<String, Integer> counters = new HashMap<>();
@@ -69,7 +73,33 @@ public class K4Foxml {
             modelName = transformModelName(modelName, false);
         }
 
-        if (modelName == null) throw new NullPointerException(Messages.INVALID_K4_FORMAT_MODEL_CONTENT + " File: " + file.getName());
+        if (modelName == null) {
+            throw new NullPointerException(Messages.INVALID_K4_FORMAT_MODEL_CONTENT + " File: " + file.getName());
+        }
+
+        //date
+
+        NodeList properties = doc.getElementsByTagName("foxml:property");
+        String createdDate = null;
+
+        if (properties.getLength() < 1) {
+            properties = doc.getElementsByTagName("property");
+        }
+
+        for (int i = 0; i < properties.getLength() ; i++) {
+            Element property = (Element) properties.item(i);
+
+            if (property.getAttribute("NAME").equals("info:fedora/fedora-system:def/model#createdDate")) {
+                createdDate = property.getAttribute("VALUE");
+                break;
+            }
+        }
+
+        if (createdDate == null) {
+            throw new IllegalArgumentException(Messages.INVALID_K4_FORMAT_MODEL_CREATED_DATE + " File: " + file.getName());
+        }
+
+        this.createdDate = createdDate;
 
         //index
 

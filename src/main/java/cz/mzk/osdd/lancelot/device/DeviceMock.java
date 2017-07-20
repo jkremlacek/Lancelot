@@ -23,10 +23,15 @@ public class DeviceMock {
 
     public static void generateFOXML(File foxmlDir, String deviceUUID) throws IOException {
         File deviceFoxml = getFile(foxmlDir, deviceUUID);
-        FileUtils.writeStringToFile(deviceFoxml, DocumentTemplates.getFoxml(deviceUUID), Charset.defaultCharset());
+        FileUtils.writeStringToFile(deviceFoxml, DocumentTemplates.getDeviceFoxml(deviceUUID), Charset.defaultCharset());
     }
 
-    private static File getFile(File descriptionDir, String deviceUUID) {
-        return new File(descriptionDir, K4Foxml.PROARC_DEVICE + "_0001_" + deviceUUID + K4Foxml.OUTPUT_FILE_SUFFIX);
+    public static void generateRELS(File relsExtDir, String deviceUUID) throws IOException {
+        File deviceRels = getFile(relsExtDir, deviceUUID);
+        FileUtils.writeStringToFile(deviceRels, DocumentTemplates.getDeviceRels(deviceUUID), Charset.defaultCharset());
+    }
+
+    private static File getFile(File file, String deviceUUID) {
+        return new File(file, K4Foxml.PROARC_DEVICE + "_0001_" + deviceUUID + K4Foxml.OUTPUT_FILE_SUFFIX);
     }
 }

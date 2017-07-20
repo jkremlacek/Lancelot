@@ -64,35 +64,35 @@ public class DocumentTemplates {
             "                    </mix:BasicDigitalObjectInformation>\n" +
             "    <mix:BasicImageInformation>\n" +
             "        <mix:BasicImageCharacteristics>\n" +
-            "            <mix:imageWidth>12025</mix:imageWidth>\n" +
-            "            <mix:imageHeight>10187</mix:imageHeight>\n" +
+            "            <mix:imageWidth>-XXX-</mix:imageWidth>\n" +
+            "            <mix:imageHeight>-XXX-</mix:imageHeight>\n" +
             "                        </mix:BasicImageCharacteristics>\n" +
             "                    </mix:BasicImageInformation>\n" +
             "    <mix:ImageAssessmentMetadata>\n" +
             "        <mix:SpatialMetrics>\n" +
-            "            <mix:samplingFrequencyUnit>cm</mix:samplingFrequencyUnit>\n" +
+            "            <mix:samplingFrequencyUnit>-XXX-</mix:samplingFrequencyUnit>\n" +
             "            <mix:xSamplingFrequency>\n" +
-            "                <mix:numerator>6000000</mix:numerator>\n" +
-            "                <mix:denominator>25400</mix:denominator>\n" +
+            "                <mix:numerator>-XXX-</mix:numerator>\n" +
+            "                <mix:denominator>1</mix:denominator>\n" +
             "                            </mix:xSamplingFrequency>\n" +
             "            <mix:ySamplingFrequency>\n" +
-            "                <mix:numerator>6000000</mix:numerator>\n" +
-            "                <mix:denominator>25400</mix:denominator>\n" +
+            "                <mix:numerator>-XXX-</mix:numerator>\n" +
+            "                <mix:denominator>1</mix:denominator>\n" +
             "                            </mix:ySamplingFrequency>\n" +
             "                        </mix:SpatialMetrics>\n" +
             "        <mix:ImageColorEncoding>\n" +
             "            <mix:BitsPerSample>\n" +
-            "                <mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>\n" +
-            "                <mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>\n" +
-            "                <mix:bitsPerSampleValue>8</mix:bitsPerSampleValue>\n" +
+            "                <mix:bitsPerSampleValue>-XXX-</mix:bitsPerSampleValue>\n" +
+            "                <mix:bitsPerSampleValue>-XXX-</mix:bitsPerSampleValue>\n" +
+            "                <mix:bitsPerSampleValue>-XXX-</mix:bitsPerSampleValue>\n" +
             "                <mix:bitsPerSampleUnit>integer</mix:bitsPerSampleUnit>\n" +
             "                            </mix:BitsPerSample>\n" +
-            "            <mix:samplesPerPixel>3</mix:samplesPerPixel>\n" +
+            "            <mix:samplesPerPixel>-XXX-</mix:samplesPerPixel>\n" +
             "                        </mix:ImageColorEncoding>\n" +
             "                    </mix:ImageAssessmentMetadata>\n" +
             "                </mix:mix>";
 
-    public static String getFoxml(String uuid) {
+    public static String getDeviceFoxml(String uuid) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                 "<digitalObject xmlns=\"info:fedora/fedora-system:def/foxml#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" VERSION=\"1.1\" PID=\"device:" + uuid + "\" xsi:schemaLocation=\"info:fedora/fedora-system:def/foxml# http://www.fedora.info/definitions/1/0/foxml1-1.xsd\">\n" +
                 "    <objectProperties>\n" +
@@ -146,5 +146,59 @@ public class DocumentTemplates {
                 "        </datastreamVersion>\n" +
                 "    </datastream>\n" +
                 "</digitalObject>";
+    }
+
+    public static String getDeviceRels(String deviceUUID) {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:fedora-model=\"info:fedora/fedora-system:def/model#\" xmlns:fedora-rels-ext=\"info:fedora/fedora-system:def/relations-external#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:proarc-rels=\"http://proarc.lib.cas.cz/relations#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
+                "    <rdf:Description rdf:about=\"info:fedora/device:" + deviceUUID + "\">\n" +
+                "        <fedora-model:hasModel rdf:resource=\"info:fedora/proarc:device:" + deviceUUID+ " \"/>\n" +
+                "    </rdf:Description>\n" +
+                "</rdf:RDF>";
+    }
+
+    public static String getPageRels() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:fedora-model=\"info:fedora/fedora-system:def/model#\" xmlns:fedora-rels-ext=\"info:fedora/fedora-system:def/relations-external#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:proarc-rels=\"http://proarc.lib.cas.cz/relations#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
+                "    <rdf:Description rdf:about=\"info:fedora/uuid:-XXX-\">\n" +
+                "        <fedora-model:hasModel rdf:resource=\"info:fedora/model:page\"/>\n" +
+                "        <proarc-rels:hasDevice rdf:resource=\"info:fedora/device:-XXX-\"/>\n" +
+                "        <proarc-rels:importFile></proarc-rels:importFile>\n" +
+                "  </rdf:Description>\n" +
+                "</rdf:RDF>";
+    }
+
+    public static String getMapRels() {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:fedora-model=\"info:fedora/fedora-system:def/model#\" xmlns:fedora-rels-ext=\"info:fedora/fedora-system:def/relations-external#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:proarc-rels=\"http://proarc.lib.cas.cz/relations#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
+                "    <rdf:Description rdf:about=\"info:fedora/uuid:-XXX-\">\n" +
+                "        <fedora-model:hasModel rdf:resource=\"info:fedora/model:ndkmap\"/>\n" +
+                "  </rdf:Description>\n" +
+                "</rdf:RDF>";
+    }
+
+    public static String getMets(String deviceUUID) {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
+                "<mets:mets xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:mets=\"http://www.loc.gov/METS/\" LABEL=\"-XXX-\" TYPE=\"-XXX-\">\n" +
+                "    <mets:metsHdr CREATEDATE=\"-XXX-\">\n" +
+                "        <mets:agent ROLE=\"CREATOR\" TYPE=\"OTHER\">\n" +
+                "            <mets:name>ProArc</mets:name>\n" +
+                "        </mets:agent>\n" +
+                "    </mets:metsHdr>\n" +
+                "    <mets:fileSec>-XXX-\n" +
+                "    </mets:fileSec>\n" +
+                "    <mets:structMap TYPE=\"PHYSICAL\" LABEL=\"Physical Structure\">-XXX-\n" +
+                "    </mets:structMap>\n" +
+                "    <mets:structMap TYPE=\"OTHERS\" LABEL=\"Other objects\">\n" +
+                "        <mets:div ID=\"DIV_DEVICES\" LABEL=\"List of devices\">\n" +
+                "            <mets:div ID=\"div_device_0001\" LABEL=\"SupraScan A0 \" DMDID=\"DMD_DC_device_0001_" + deviceUUID + "\" TYPE=\"proarc:device\" CONTENTIDS=\"device:" + deviceUUID + "\">\n" +
+                "                <mets:fptr FILEID=\"FOXML_device_0001_" + deviceUUID + "\"/>\n" +
+                "                <mets:fptr FILEID=\"DESCRIPTION_device_0001_" + deviceUUID + "\"/>\n" +
+                "                <mets:fptr FILEID=\"AUDIT_device_0001_" + deviceUUID + "\"/>\n" +
+                "                <mets:fptr FILEID=\"RELS-EXT_device_0001_" + deviceUUID + "\"/>\n" +
+                "            </mets:div>\n" +
+                "        </mets:div>\n" +
+                "    </mets:structMap>\n" +
+                "</mets:mets>";
     }
 }
