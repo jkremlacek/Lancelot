@@ -16,14 +16,7 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
@@ -189,7 +182,7 @@ public class ProarcArchivePack {
 
             outDoc.appendChild(newNode);
 
-            saveDocument(outDoc, new File(AUDIT_DIR, foxml.getValue().getOutputFilename()), false);
+            DocumentUtils.saveDocument(outDoc, new File(AUDIT_DIR, foxml.getValue().getOutputFilename()), false);
         }
 
         //add fake device AUDIT file
@@ -213,7 +206,7 @@ public class ProarcArchivePack {
 
             //save file
             File outFile = new File(FOXML_DIR, foxml.getValue().getOutputFilename());
-            saveDocument(outDoc, outFile, false);
+            DocumentUtils.saveDocument(outDoc, outFile, false);
 
             //remove foxml prefix
 
@@ -436,7 +429,7 @@ public class ProarcArchivePack {
             //save file
 
             outDoc.setXmlStandalone(true);
-            saveDocument(outDoc, outFile, false);
+            DocumentUtils.saveDocument(outDoc, outFile, false);
 
             //remove empty xmlns
 
@@ -514,7 +507,7 @@ public class ProarcArchivePack {
         for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
             Document relsDoc = processFoxmlRels(foxml.getValue());
 
-            saveDocument(relsDoc, new File(RELS_EXT_DIR, foxml.getValue().getOutputFilename()), false);
+            DocumentUtils.saveDocument(relsDoc, new File(RELS_EXT_DIR, foxml.getValue().getOutputFilename()), false);
         }
 
         DeviceMock.generateRELS(RELS_EXT_DIR, deviceUUID);
@@ -526,8 +519,8 @@ public class ProarcArchivePack {
         if (foxml.type.equals(K4Foxml.PROARC_PAGE)) {
             outDoc = DocumentUtils.loadDocumentFromString(DocumentTemplates.getPageRels());
 
-            setElementTextContent(outDoc, "Kramerius_Export", "proarc-rels:importFile");
-            setElementAttributeContent(outDoc, "info:fedora/device:" + deviceUUID, "proarc-rels:hasDevice", "rdf:resource");
+            DocumentUtils.setElementTextContent(outDoc, "Kramerius_Export", "proarc-rels:importFile");
+            DocumentUtils.setElementAttributeContent(outDoc, "info:fedora/device:" + deviceUUID, "proarc-rels:hasDevice", "rdf:resource");
 
         } else if (foxml.type.equals(K4Foxml.PROARC_MAP)) {
             outDoc = DocumentUtils.loadDocumentFromString(DocumentTemplates.getMapRels());
@@ -535,7 +528,7 @@ public class ProarcArchivePack {
             throw new IllegalArgumentException(Messages.RELS_UNSUPPORTED_MODEL + " Model: " + foxml.type + " File: " + foxml.filename);
         }
 
-        setElementAttributeContent(outDoc, "info:fedora/uuid:" + foxml.filename, "rdf:Description", "rdf:about");
+        DocumentUtils.setElementAttributeContent(outDoc, "info:fedora/uuid:" + foxml.filename, "rdf:Description", "rdf:about");
 
         //set pages for all models that can contain pages
         if (foxml.type.equals(K4Foxml.PROARC_MAP)) {
@@ -665,7 +658,7 @@ public class ProarcArchivePack {
         for (File image : images) {
             Document mixDoc = generateMixDocument(iml.getMetadataFromImage(image));
 
-            saveDocument(mixDoc, new File(rawMixDir, FilenameUtils.removeExtension(image.getName()) + XML_FILE_SUFFIX), true);
+            DocumentUtils.saveDocument(mixDoc, new File(rawMixDir, FilenameUtils.removeExtension(image.getName()) + XML_FILE_SUFFIX), true);
         }
     }
 
@@ -707,65 +700,18 @@ public class ProarcArchivePack {
         removeElement(element);
     }
 
-    private void setElementTextContent(Document outDoc, String content, String elementTag) {
-        if (content.equals(null) || content.equals("")) {
-            throw new IllegalArgumentException(Messages.EMPTY_CONTENT);
-        }
-
-        outDoc.getElementsByTagName(elementTag).item(0).setTextContent(content);
-    }
-
-    private void setElementTextContent(Document outDoc, String content, String elementTag, String parentTag) {
-        if (content.equals(null) || content.equals("")) {
-            throw new IllegalArgumentException(Messages.EMPTY_CONTENT);
-        }
-
-        Element parent = (Element) outDoc.getElementsByTagName(parentTag).item(0);
-
-        NodeList children = parent.getChildNodes();
-
-        for (int i = 0; i < children.getLength(); i++) {
-            if (children.item(i).getNodeName() != null && children.item(i).getNodeName().equals(elementTag)) {
-                children.item(i).setTextContent(content);
-                return;
-            }
-        }
-
-        throw new IllegalArgumentException(Messages.ELEMENT_NOT_FOUND + "Requested element: " + elementTag);
-    }
-
-    private void setElementAttributeContent(Document outDoc, String content, String elementTag, String attributeTag) {
-        ((Element) outDoc.getElementsByTagName(elementTag).item(0)).setAttribute(attributeTag, content);
-    }
-
-    private void saveDocument(Document doc, File outputFile, Boolean omitXMLStandalone) throws TransformerException {
-        Source domSource = new DOMSource(doc);
-        Result output = new StreamResult(outputFile);
-
-        TransformerFactory transformerFactory = TransformerFactory.newInstance();
-
-        Transformer transformer = transformerFactory.newTransformer();
-
-        //TODO: outputProperty se neprojevuji ve vysledku
-        transformer.setOutputProperty("{http://xml.apache.org/xalan}indent-amount", "4");
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, omitXMLStandalone ? "yes" : "no");
-
-        transformer.transform(domSource, output);
-    }
-
     private Document generateMixDocument(Document imageData) throws IOException, SAXException, ParserConfigurationException {
         Document outDoc = DocumentUtils.loadDocumentFromString(DocumentTemplates.MIX_CONTENT);
 
         Element data = (Element) imageData.getElementsByTagName("rdf:Description") .item(0);
 
-        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:ImageWidth"), "mix:imageWidth");
-        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:ImageHeight"), "mix:imageHeight");
+        DocumentUtils.setElementTextContent(outDoc, data.getAttribute("Jpeg2000:ImageWidth"), "mix:imageWidth");
+        DocumentUtils.setElementTextContent(outDoc, data.getAttribute("Jpeg2000:ImageHeight"), "mix:imageHeight");
 
-        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureXResolution"), "mix:numerator", "mix:xSamplingFrequency");
-        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureYResolution"), "mix:numerator", "mix:ySamplingFrequency");
+        DocumentUtils.setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureXResolution"), "mix:numerator", "mix:xSamplingFrequency");
+        DocumentUtils.setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureYResolution"), "mix:numerator", "mix:ySamplingFrequency");
 
-        setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureXResolutionUnit"), "mix:samplingFrequencyUnit");
+        DocumentUtils.setElementTextContent(outDoc, data.getAttribute("Jpeg2000:CaptureXResolutionUnit"), "mix:samplingFrequencyUnit");
 
         if (!data.getAttribute("Jpeg2000:CaptureXResolutionUnit").equals(data.getAttribute("Jpeg2000:CaptureYResolutionUnit"))) {
             throw new IllegalArgumentException(Messages.IMAGE_RESOLUTION_UNIT_NOT_EQUAL + " Image: " + data.getAttribute("rdf:about"));
@@ -781,7 +727,7 @@ public class ProarcArchivePack {
 
         Integer samplesPerPixel = Integer.parseInt(data.getAttribute("Jpeg2000:NumberOfComponents"));
 
-        setElementTextContent(outDoc, samplesPerPixel.toString(), "mix:samplesPerPixel");
+        DocumentUtils.setElementTextContent(outDoc, samplesPerPixel.toString(), "mix:samplesPerPixel");
 
         Integer bitCount = Integer.parseInt(bitsPerComponentString[0]);
 
