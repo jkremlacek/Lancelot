@@ -44,11 +44,11 @@ public class Messages {
     public static final String DOWNLOAD_FAILED = " ... failed";
     public static final String IMAGE_RESOLUTION_UNIT_NOT_EQUAL = "Image does not contain same resolution unit for x and y axis.";
 
-    public static final String IMAGE_SAMPLING_TYPE_NOT_SUPPORTED = "Image contains BitsPerComponent with unsupported number type.";
+    public static final String IMAGE_SAMPLING_TYPE_NOT_SUPPORTED = "Image contains BitsPerComponent with unsupported number model.";
     public static final String RELS_UNSUPPORTED_MODEL = "Requested export model is not supported for generating RELS-EXT file.";
 
     public static final String INVALID_PROARC_FORMAT_MODEL_CONTROL_GROUP = "Unsupported datastream control group.";
-    public static final String INVALID_PROARC_FORMAT_MODEL_XML_TYPE = "Unsupported xml type datastream.";
+    public static final String INVALID_PROARC_FORMAT_MODEL_XML_TYPE = "Unsupported xml model datastream.";
 
     public static final String K4_CONTAINS_LTGT = "K4 export contains \"&lt;\" and/or \"&gt;\" characters, these characters are later replaced by their </> counterparts. Conversion terminated.";
 
@@ -56,6 +56,16 @@ public class Messages {
     public static final String ELEMENT_NOT_FOUND = "Requested element was not found";
 
     public static final String INVALID_OUTPUT_FORMAT = "Conversion was unable to retrieve some values.";
+
+    public static final String METS_LABEL_NOT_FOUND = "Mets primary label within mods:titleInfo not found.";
+    public static final String METS_UNSUPPORTED_DMD_TYPE = "Unsupported DMD model.";
+
+    public static final String MODEL_UNKNOWN = "Unknown ProArc model.";
+    public static final String FOXML_IN_MAP_NOT_FOUND = "UUID not found within k4 map.";
+
+    public static final String PROARC_EXPORT_NOT_EXISTING = "ProArc export directory does not exist.";
+
+    public static final String PROARC_EXPORT_NOTE = "Note that processing METS requires rest of the export conversion completed.";
 
     private static String getProcessMessage(String processName, Boolean start) {
         Calendar c = Calendar.getInstance();

@@ -129,8 +129,8 @@ public class ExportConverter {
         proarcArchivePack.processFoxml();
         Messages.reportProcessState(Messages.PROCESS_FOXML_NAME, false);
 
-        //Messages.reportProcessState(Messages.PROCESS_METS_NAME, true);
-        //proarcArchivePack.processMets();
-        //Messages.reportProcessState(Messages.PROCESS_METS_NAME, false);
+        Messages.reportProcessState(Messages.PROCESS_METS_NAME, true);
+        proarcArchivePack.processMets();
+        Messages.reportProcessState(Messages.PROCESS_METS_NAME, false);
     }
 }

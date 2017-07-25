@@ -5,6 +5,8 @@ import cz.mzk.osdd.lancelot.utils.DocumentTemplates;
 import cz.mzk.osdd.lancelot.utils.DocumentUtils;
 import cz.mzk.osdd.lancelot.utils.ImageMetadataLoader;
 import cz.mzk.osdd.lancelot.utils.Messages;
+import cz.mzk.osdd.lancelot.utils.MetsGenerator;
+import cz.mzk.osdd.lancelot.utils.ModelDefinitions;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -32,19 +34,6 @@ import org.xml.sax.SAXException;
  */
 public class ProarcArchivePack {
 
-    public static final String AUDIT_DIR_NAME = "AUDIT";
-    public static final String DESCRIPTION_DIR_NAME = "DESCRIPTION";
-    public static final String FOXML_DIR_NAME = "FOXML";
-    public static final String FULL_DIR_NAME = "FULL";
-    public static final String NDK_ARCHIVAL_DIR_NAME = "NDK_ARCHIVAL";
-    public static final String NDK_ARCHIVAL_MIX_DIR_NAME = "NDK_ARCHIVAL_MIX";
-    public static final String NDK_USER_DIR_NAME = "NDK_USER";
-    public static final String PREVIEW_DIR_NAME = "PREVIEW";
-    public static final String RAW_DIR_NAME = "RAW";
-    public static final String RAW_MIX_DIR_NAME = "RAW_MIX";
-    public static final String RELS_EXT_DIR_NAME = "RELS-EXT";
-    public static final String THUMBNAIL_DIR_NAME = "THUMBNAIL";
-
     private static final String FULL_FILE_SUFFIX = ".jpg";
     private static final String NDK_ARCHIVAL_FILE_SUFFIX = ".jp2";
     private static final String NDK_USER_FILE_SUFFIX = ".jp2";
@@ -60,20 +49,6 @@ public class ProarcArchivePack {
     private static final String RAW_URL_SUFFIX = "/original";
     private static final String THUMBNAIL_URL_SUFFIX = "/thumb.jpg";
 
-    private static final String JP2_MIMETYPE = "image/jp2";
-    private static final String JPEG_MIMETYPE = "image/jpeg";
-    private static final String XML_MIMETYPE = "text/xml";
-
-    private static final String RAW_MIMETYPE = JP2_MIMETYPE;
-    private static final String FULL_MIMETYPE = JPEG_MIMETYPE;
-    private static final String PREVIEW_MIMETYPE = JPEG_MIMETYPE;
-    private static final String THUMBNAIL_MIMETYPE = JPEG_MIMETYPE;
-    private static final String NDK_ARCHIVAL_MIMETYPE = JP2_MIMETYPE;
-    private static final String NDK_USER_MIMETYPE = JP2_MIMETYPE;
-    private static final String RAW_MIX_MIMETYPE = XML_MIMETYPE;
-    private static final String NDK_ARCHIVAL_MIX_MIMETYPE = XML_MIMETYPE;
-    private static final String RELS_EXT_MIMETYPE = XML_MIMETYPE;
-
     private static final String RAW_LABEL = "Original digital content of this object";
     private static final String FULL_LABEL = "Presentable version of RAW";
     private static final String PREVIEW_LABEL = "Preview of this object";
@@ -87,18 +62,8 @@ public class ProarcArchivePack {
     private final File krameriusExportLocation;
     private final File proarcArchiveLocation;
 
-    private final File AUDIT_DIR;
-    private final File DESCRIPTION_DIR;
-    private final File FOXML_DIR;
-    private final File FULL_DIR;
-    private final File NDK_ARCHIVAL_DIR;
-    private final File NDK_ARCHIVAL_MIX_DIR;
-    private final File NDK_USER_DIR;
-    private final File PREVIEW_DIR;
-    private final File RAW_DIR;
-    private final File RAW_MIX_DIR;
-    private final File RELS_EXT_DIR;
-    private final File THUMBNAIL_DIR;
+    private final ExportDirectories exportDirectories;
+    private final K4Foxml rootFoxml;
 
     private String deviceUUID = "11111111-1111-1111-1111-111111111111";
 
@@ -136,19 +101,8 @@ public class ProarcArchivePack {
 
         this.krameriusExportLocation = krameriusExportLocation;
         this.proarcArchiveLocation = new File(proarcArchiveLocation, krameriusExportLocation.getName());
-
-        AUDIT_DIR = new File(this.proarcArchiveLocation, AUDIT_DIR_NAME);
-        DESCRIPTION_DIR = new File(this.proarcArchiveLocation, DESCRIPTION_DIR_NAME);
-        FOXML_DIR = new File(this.proarcArchiveLocation, FOXML_DIR_NAME);
-        FULL_DIR = new File(this.proarcArchiveLocation, FULL_DIR_NAME);
-        NDK_ARCHIVAL_DIR = new File(this.proarcArchiveLocation, NDK_ARCHIVAL_DIR_NAME);
-        NDK_ARCHIVAL_MIX_DIR = new File(this.proarcArchiveLocation, NDK_ARCHIVAL_MIX_DIR_NAME);
-        NDK_USER_DIR = new File(this.proarcArchiveLocation, NDK_USER_DIR_NAME);
-        PREVIEW_DIR = new File(this.proarcArchiveLocation, PREVIEW_DIR_NAME);
-        RAW_DIR = new File(this.proarcArchiveLocation, RAW_DIR_NAME);
-        RAW_MIX_DIR = new File(this.proarcArchiveLocation, RAW_MIX_DIR_NAME);
-        RELS_EXT_DIR = new File(this.proarcArchiveLocation, RELS_EXT_DIR_NAME);
-        THUMBNAIL_DIR = new File(this.proarcArchiveLocation, THUMBNAIL_DIR_NAME);
+        
+        this.exportDirectories = new ExportDirectories(proarcArchiveLocation);
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         documentBuilder = dbf.newDocumentBuilder();
@@ -158,10 +112,16 @@ public class ProarcArchivePack {
         }
 
         loadFoxmls();
+
+        this.rootFoxml = k4FoxmlMap.get(krameriusExportLocation.getName());
+
+        if (rootFoxml == null) {
+            throw new IllegalStateException(Messages.FOXML_IN_MAP_NOT_FOUND);
+        }
     }
 
     public void processAudit() throws TransformerException, IOException {
-        AUDIT_DIR.mkdirs();
+        exportDirectories.AUDIT_DIR.mkdirs();
 
         for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
             Document inDoc = foxml.getValue().document;
@@ -182,19 +142,19 @@ public class ProarcArchivePack {
 
             outDoc.appendChild(newNode);
 
-            DocumentUtils.saveDocument(outDoc, new File(AUDIT_DIR, foxml.getValue().getOutputFilename()), false);
+            DocumentUtils.saveDocument(outDoc, new File(exportDirectories.AUDIT_DIR, foxml.getValue().getOutputName()), false);
         }
 
         //add fake device AUDIT file
-        DeviceMock.generateAUDIT(AUDIT_DIR, deviceUUID);
+        DeviceMock.generateAUDIT(exportDirectories.AUDIT_DIR, deviceUUID);
     }
 
     public void processDescription() throws IOException {
-        DeviceMock.generateDESCRIPTION(DESCRIPTION_DIR, deviceUUID);
+        DeviceMock.generateDESCRIPTION(exportDirectories.DESCRIPTION_DIR, deviceUUID);
     }
 
     public void processFoxml() throws IOException, TransformerException, ParserConfigurationException, SAXException {
-        FOXML_DIR.mkdirs();
+        exportDirectories.FOXML_DIR.mkdirs();
 
         for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
             Document inDoc = foxml.getValue().document;
@@ -205,7 +165,7 @@ public class ProarcArchivePack {
             outDoc.appendChild(rootElement);
 
             //save file
-            File outFile = new File(FOXML_DIR, foxml.getValue().getOutputFilename());
+            File outFile = new File(exportDirectories.FOXML_DIR, foxml.getValue().getOutputName());
             DocumentUtils.saveDocument(outDoc, outFile, false);
 
             //remove foxml prefix
@@ -222,7 +182,7 @@ public class ProarcArchivePack {
 
             //load file
 
-            outDoc = foxml.getValue().load(outFile).document;
+            outDoc = new K4Foxml(outFile).document;
 
             //auditTrail add xmlns
 
@@ -251,7 +211,7 @@ public class ProarcArchivePack {
 
             //change modeltype
 
-            NodeList dcTypeList = outDoc.getElementsByTagName("dc:type");
+            NodeList dcTypeList = outDoc.getElementsByTagName("dc:model");
 
             for (int i = 0; i < dcTypeList.getLength(); i++) {
 
@@ -313,7 +273,7 @@ public class ProarcArchivePack {
 
             //modify page-specific parts in foxml
 
-            if (foxml.getValue().type.equals(K4Foxml.PROARC_PAGE)) {
+            if (foxml.getValue().model.equals(ModelDefinitions.PROARC_PAGE)) {
 
                 //remove datastream IMG_FULL and IMG_PREVIEW
 
@@ -334,70 +294,70 @@ public class ProarcArchivePack {
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        RAW_DIR_NAME,
-                        RAW_MIMETYPE,
+                        ModelDefinitions.RAW,
+                        ExportDirectories.RAW_MIMETYPE,
                         RAW_LABEL,
-                        Long.toString(new File(RAW_DIR, foxml.getValue().getOutputFilename(RAW_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.RAW_DIR, foxml.getValue().getOutputName(RAW_FILE_SUFFIX)).length()),
                         "M"
                 );
 
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        FULL_DIR_NAME,
-                        FULL_MIMETYPE,
+                        ModelDefinitions.FULL,
+                        ExportDirectories.FULL_MIMETYPE,
                         FULL_LABEL,
-                        Long.toString(new File(FULL_DIR, foxml.getValue().getOutputFilename(FULL_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.FULL_DIR, foxml.getValue().getOutputName(FULL_FILE_SUFFIX)).length()),
                         "M"
                 );
 
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        PREVIEW_DIR_NAME,
-                        PREVIEW_MIMETYPE,
+                        ModelDefinitions.PREVIEW,
+                        ExportDirectories.PREVIEW_MIMETYPE,
                         PREVIEW_LABEL,
-                        Long.toString(new File(PREVIEW_DIR, foxml.getValue().getOutputFilename(PREVIEW_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.PREVIEW_DIR, foxml.getValue().getOutputName(PREVIEW_FILE_SUFFIX)).length()),
                         "M"
                 );
 
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        THUMBNAIL_DIR_NAME,
-                        THUMBNAIL_MIMETYPE,
+                        ModelDefinitions.THUMBNAIL,
+                        ExportDirectories.THUMBNAIL_MIMETYPE,
                         THUMBNAIL_LABEL,
-                        Long.toString(new File(THUMBNAIL_DIR, foxml.getValue().getOutputFilename(THUMBNAIL_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.THUMBNAIL_DIR, foxml.getValue().getOutputName(THUMBNAIL_FILE_SUFFIX)).length()),
                         "M"
                 );
 
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        NDK_ARCHIVAL_DIR_NAME,
-                        NDK_ARCHIVAL_MIMETYPE,
+                        ModelDefinitions.NDK_ARCHIVAL,
+                        ExportDirectories.NDK_ARCHIVAL_MIMETYPE,
                         NDK_ARCHIVAL_LABEL,
-                        Long.toString(new File(NDK_ARCHIVAL_DIR, foxml.getValue().getOutputFilename(NDK_ARCHIVAL_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.NDK_ARCHIVAL_DIR, foxml.getValue().getOutputName(NDK_ARCHIVAL_FILE_SUFFIX)).length()),
                         "M"
                 );
 
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        NDK_USER_DIR_NAME,
-                        NDK_USER_MIMETYPE,
+                        ModelDefinitions.NDK_USER,
+                        ExportDirectories.NDK_USER_MIMETYPE,
                         NDK_USER_LABEL,
-                        Long.toString(new File(NDK_USER_DIR, foxml.getValue().getOutputFilename(NDK_USER_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.NDK_USER_DIR, foxml.getValue().getOutputName(NDK_USER_FILE_SUFFIX)).length()),
                         "M"
                 );
 
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        RAW_MIX_DIR_NAME,
-                        RAW_MIX_MIMETYPE,
+                        ModelDefinitions.RAW_MIX,
+                        ExportDirectories.RAW_MIX_MIMETYPE,
                         RAW_MIX_LABEL,
-                        Long.toString(new File(RAW_MIX_DIR, foxml.getValue().getOutputFilename(XML_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.RAW_MIX_DIR, foxml.getValue().getOutputName(XML_FILE_SUFFIX)).length()),
                         "X",
                         "http://www.loc.gov/mix/v20"
                 );
@@ -405,10 +365,10 @@ public class ProarcArchivePack {
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        NDK_ARCHIVAL_MIX_DIR_NAME,
-                        NDK_ARCHIVAL_MIX_MIMETYPE,
+                        ModelDefinitions.NDK_ARCHIVAL_MIX,
+                        ExportDirectories.NDK_ARCHIVAL_MIX_MIMETYPE,
                         NDK_ARCHIVAL_MIX_LABEL,
-                        Long.toString(new File(NDK_ARCHIVAL_MIX_DIR, foxml.getValue().getOutputFilename(XML_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.NDK_ARCHIVAL_MIX_DIR, foxml.getValue().getOutputName(XML_FILE_SUFFIX)).length()),
                         "X",
                         "http://www.loc.gov/mix/v20"
                 );
@@ -416,10 +376,10 @@ public class ProarcArchivePack {
                 createDatastream(
                         outDoc,
                         foxml.getValue(),
-                        RELS_EXT_DIR_NAME,
-                        RELS_EXT_MIMETYPE,
+                        ModelDefinitions.RELS_EXT,
+                        ExportDirectories.RELS_EXT_MIMETYPE,
                         RELS_EXT_LABEL,
-                        Long.toString(new File(RELS_EXT_DIR, foxml.getValue().getOutputFilename(XML_FILE_SUFFIX)).length()),
+                        Long.toString(new File(exportDirectories.RELS_EXT_DIR, foxml.getValue().getOutputName(XML_FILE_SUFFIX)).length()),
                         "X",
                         "info:fedora/fedora-system:FedoraRELSExt-1.0"
                 );
@@ -446,13 +406,13 @@ public class ProarcArchivePack {
             }
         }
 
-        DeviceMock.generateFOXML(FOXML_DIR, deviceUUID);
+        DeviceMock.generateFOXML(exportDirectories.FOXML_DIR, deviceUUID);
     }
 
     public void processFull() throws IOException {
         downloadImages(
                 FULL_URL_SUFFIX,
-                FULL_DIR,
+                exportDirectories.FULL_DIR,
                 FULL_FILE_SUFFIX
         );
     }
@@ -460,17 +420,17 @@ public class ProarcArchivePack {
     public void processNDKArchival() throws IOException, TransformerException, ParserConfigurationException, SAXException {
         List<File> images = downloadImages(
                 NDK_ARCHIVAL_URL_SUFFIX,
-                NDK_ARCHIVAL_DIR,
+                exportDirectories.NDK_ARCHIVAL_DIR,
                 NDK_ARCHIVAL_FILE_SUFFIX
         );
 
-        generateMix(NDK_ARCHIVAL_MIX_DIR, images);
+        generateMix(exportDirectories.NDK_ARCHIVAL_MIX_DIR, images);
     }
 
     public void processNDKUser() throws IOException {
         downloadImages(
                 NDK_USER_URL_SUFFIX,
-                NDK_USER_DIR,
+                exportDirectories.NDK_USER_DIR,
                 NDK_USER_FILE_SUFFIX
         );
     }
@@ -478,7 +438,7 @@ public class ProarcArchivePack {
     public void processPreview() throws IOException {
         downloadImages(
                 PREVIEW_URL_SUFFIX,
-                PREVIEW_DIR,
+                exportDirectories.PREVIEW_DIR,
                 PREVIEW_FILE_SUFFIX
         );
     }
@@ -486,57 +446,63 @@ public class ProarcArchivePack {
     public void processRaw() throws IOException, TransformerException, ParserConfigurationException, SAXException {
         List<File> images = downloadImages(
                 RAW_URL_SUFFIX,
-                RAW_DIR,
+                exportDirectories.RAW_DIR,
                 RAW_FILE_SUFFIX
         );
 
-        generateMix(RAW_MIX_DIR, images);
+        generateMix(exportDirectories.RAW_MIX_DIR, images);
     }
 
     public void processThumbnail() throws IOException {
         downloadImages(
                 THUMBNAIL_URL_SUFFIX,
-                THUMBNAIL_DIR,
+                exportDirectories.THUMBNAIL_DIR,
                 THUMBNAIL_FILE_SUFFIX
         );
     }
 
     public void processRelsExt() throws TransformerException, ParserConfigurationException, SAXException, IOException {
-        RELS_EXT_DIR.mkdirs();
+        exportDirectories.RELS_EXT_DIR.mkdirs();
 
         for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
             Document relsDoc = processFoxmlRels(foxml.getValue());
 
-            DocumentUtils.saveDocument(relsDoc, new File(RELS_EXT_DIR, foxml.getValue().getOutputFilename()), false);
+            DocumentUtils.saveDocument(relsDoc, new File(exportDirectories.RELS_EXT_DIR, foxml.getValue().getOutputName()), false);
         }
 
-        DeviceMock.generateRELS(RELS_EXT_DIR, deviceUUID);
+        DeviceMock.generateRELS(exportDirectories.RELS_EXT_DIR, deviceUUID);
+    }
+    
+    public void processMets() throws TransformerException, IOException {
+        MetsGenerator m = new MetsGenerator();
+        
+        m.createMetsXML(exportDirectories.METS_DIR, rootFoxml, documentBuilder.newDocument(), exportDirectories ,k4FoxmlMap , deviceUUID);
     }
 
     private Document processFoxmlRels(K4Foxml foxml) throws IOException, SAXException, ParserConfigurationException {
         Document outDoc;
 
-        if (foxml.type.equals(K4Foxml.PROARC_PAGE)) {
+        if (foxml.model.equals(ModelDefinitions.PROARC_PAGE)) {
             outDoc = DocumentUtils.loadDocumentFromString(DocumentTemplates.getPageRels());
 
             DocumentUtils.setElementTextContent(outDoc, "Kramerius_Export", "proarc-rels:importFile");
             DocumentUtils.setElementAttributeContent(outDoc, "info:fedora/device:" + deviceUUID, "proarc-rels:hasDevice", "rdf:resource");
 
-        } else if (foxml.type.equals(K4Foxml.PROARC_MAP)) {
+        } else if (foxml.model.equals(ModelDefinitions.PROARC_MAP)) {
             outDoc = DocumentUtils.loadDocumentFromString(DocumentTemplates.getMapRels());
         } else {
-            throw new IllegalArgumentException(Messages.RELS_UNSUPPORTED_MODEL + " Model: " + foxml.type + " File: " + foxml.filename);
+            throw new IllegalArgumentException(Messages.RELS_UNSUPPORTED_MODEL + " Model: " + foxml.model + " File: " + foxml.UUID);
         }
 
-        DocumentUtils.setElementAttributeContent(outDoc, "info:fedora/uuid:" + foxml.filename, "rdf:Description", "rdf:about");
+        DocumentUtils.setElementAttributeContent(outDoc, "info:fedora/uuid:" + foxml.UUID, "rdf:Description", "rdf:about");
 
         //set pages for all models that can contain pages
-        if (foxml.type.equals(K4Foxml.PROARC_MAP)) {
+        if (foxml.model.equals(ModelDefinitions.PROARC_MAP)) {
             processMembers(foxml, outDoc, "hasPage");
         }
 
         //set members for all models that have children
-//        if (foxml.type.equals(K4Foxml.PROARC_YEAR)) {
+//        if (foxml.model.equals(K4Foxml.PROARC_YEAR)) {
 //            processMembers(foxml, outDoc, );
 //        }
 
@@ -597,7 +563,7 @@ public class ProarcArchivePack {
             Element contentLocation = outDoc.createElement("contentLocation");
 
             contentLocation.setAttribute("TYPE", "INTERNAL_ID");
-            contentLocation.setAttribute("REF", "uuid:" + foxml.filename + "+" + datastreamId + "+" + datastreamId + ".0");
+            contentLocation.setAttribute("REF", "uuid:" + foxml.UUID + "+" + datastreamId + "+" + datastreamId + ".0");
 
             datastreamVersion.appendChild(contentLocation);
         } else if (isWithinXMLMimeTypes(mimeType)) {
@@ -605,14 +571,14 @@ public class ProarcArchivePack {
 
             File source;
 
-            if (datastreamId.equals(RAW_MIX_DIR_NAME)) {
-                source = new File(RAW_MIX_DIR, foxml.getOutputFilename(XML_FILE_SUFFIX));
-            } else if (datastreamId.equals(NDK_ARCHIVAL_MIX_DIR_NAME)) {
-                source = new File(NDK_ARCHIVAL_MIX_DIR, foxml.getOutputFilename(XML_FILE_SUFFIX));
-            } else if (datastreamId.equals(RELS_EXT_DIR_NAME)) {
-                source = new File(RELS_EXT_DIR, foxml.getOutputFilename(XML_FILE_SUFFIX));
+            if (datastreamId.equals(ModelDefinitions.RAW_MIX)) {
+                source = new File(exportDirectories.RAW_MIX_DIR, foxml.getOutputName(XML_FILE_SUFFIX));
+            } else if (datastreamId.equals(ModelDefinitions.NDK_ARCHIVAL_MIX)) {
+                source = new File(exportDirectories.NDK_ARCHIVAL_MIX_DIR, foxml.getOutputName(XML_FILE_SUFFIX));
+            } else if (datastreamId.equals(ModelDefinitions.RELS_EXT)) {
+                source = new File(exportDirectories.RELS_EXT_DIR, foxml.getOutputName(XML_FILE_SUFFIX));
             } else {
-                throw new IllegalArgumentException(Messages.INVALID_PROARC_FORMAT_MODEL_XML_TYPE + " datastreamId: " + datastreamId + " File: " + foxml.filename);
+                throw new IllegalArgumentException(Messages.INVALID_PROARC_FORMAT_MODEL_XML_TYPE + " datastreamId: " + datastreamId + " File: " + foxml.UUID);
             }
 
             String textContent = FileUtils.readFileToString(source, Charset.defaultCharset());
@@ -629,11 +595,11 @@ public class ProarcArchivePack {
     }
 
     private boolean isWithinXMLMimeTypes(String mimeType) {
-        return mimeType.equals(XML_MIMETYPE);
+        return mimeType.equals(ExportDirectories.XML_MIMETYPE);
     }
 
     private boolean isWithinImageMimeTypes(String mimeType) {
-        return mimeType.equals(JPEG_MIMETYPE) || mimeType.equals(JP2_MIMETYPE);
+        return mimeType.equals(ExportDirectories.JPEG_MIMETYPE) || mimeType.equals(ExportDirectories.JP2_MIMETYPE);
     }
 
     private void processMembers(K4Foxml foxml, Document outDoc, String K4ElementTagName) {
@@ -673,7 +639,7 @@ public class ProarcArchivePack {
             //put processed k4foxml to map
 
             K4Foxml k4Foxml = new K4Foxml(file);
-            k4FoxmlMap.put(k4Foxml.getOutputFilename(), k4Foxml);
+            k4FoxmlMap.put(k4Foxml.UUID, k4Foxml);
         }
     }
 
@@ -722,7 +688,7 @@ public class ProarcArchivePack {
         String numberType = bitsPerComponentString[2].toLowerCase();
 
         if (!numberType.equals("integer") && !numberType.equals("unsigned")) {
-            throw new IllegalArgumentException(Messages.IMAGE_SAMPLING_TYPE_NOT_SUPPORTED + "Image: " + data.getAttribute("rdf:about") + " Number type: " + numberType);
+            throw new IllegalArgumentException(Messages.IMAGE_SAMPLING_TYPE_NOT_SUPPORTED + "Image: " + data.getAttribute("rdf:about") + " Number model: " + numberType);
         }
 
         Integer samplesPerPixel = Integer.parseInt(data.getAttribute("Jpeg2000:NumberOfComponents"));
@@ -754,7 +720,7 @@ public class ProarcArchivePack {
             System.out.print(Messages.DOWNLOAD_STARTED + " " + fullUrl.toString() + " ");
 
             try {
-                File image = new File(fileDir, foxml.getValue().getOutputFilename(fileSuffix));
+                File image = new File(fileDir, foxml.getValue().getOutputName(fileSuffix));
 
                 FileUtils.copyURLToFile(fullUrl, image);
 
@@ -775,7 +741,7 @@ public class ProarcArchivePack {
     private String loadImageInfo(K4Foxml foxml) {
         Document doc = foxml.document;
 
-        if (!K4Foxml.MODELS_WITH_IMAGES.contains(foxml.type)) {
+        if (!K4Foxml.MODELS_WITH_IMAGES.contains(foxml.model)) {
             return null;
         }
 

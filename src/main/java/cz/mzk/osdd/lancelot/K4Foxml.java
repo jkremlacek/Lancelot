@@ -1,10 +1,13 @@
 package cz.mzk.osdd.lancelot;
 
 import cz.mzk.osdd.lancelot.utils.Messages;
+import cz.mzk.osdd.lancelot.utils.ModelDefinitions;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
@@ -20,15 +23,9 @@ import org.xml.sax.SAXException;
  * @author Jakub Kremlacek
  */
 public class K4Foxml {
-    public static final String K4_MAP = "map";
-    public static final String K4_PAGE = "page";
-
-    public static final String PROARC_DEVICE = "device";
-    public static final String PROARC_MAP = "ndkmap";
-    public static final String PROARC_PAGE = "page";
 
     public static final List<String> MODELS_WITH_IMAGES = new ArrayList<String>() {{
-        add(K4Foxml.K4_PAGE);
+        add(ModelDefinitions.K4_PAGE);
     }};
 
     public static final String OUTPUT_FILE_SUFFIX = ".xml";
@@ -36,16 +33,22 @@ public class K4Foxml {
     public final Document document;
     public final Integer index;
 
-    //String representing type transformed into Proarc variant
-    public final String type;
-    public final String filename;
+    //String representing model transformed into Proarc variant
+    public final String model;
+
+    public final String UUID;
     public final String createdDate;
+
+    public final File originalSource;
+
+    public final List<String> children;
 
     //foxmltype, # of occurences
     private static Map<String, Integer> counters = new HashMap<>();
 
     public K4Foxml(File file) throws ParserConfigurationException, IOException, SAXException {
-        this.filename = file.getName().substring(0, file.getName().lastIndexOf('.'));
+        this.originalSource = file;
+        this.UUID = file.getName().substring(0, file.getName().lastIndexOf('.'));
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder documentBuilder = dbf.newDocumentBuilder();
@@ -116,9 +119,28 @@ public class K4Foxml {
 
         this.document = doc;
         this.index = counter;
-        this.type = modelName;
+        this.model = modelName;
+
+        NodeList hasPages = doc.getElementsByTagName("hasPage");
+
+        List<String> pages = new LinkedList<>();
+
+        for (int i = 0; i < hasPages.getLength(); i++) {
+            String rdfResource = ((Element) hasPages.item(i)).getAttribute("rdf:resource");
+
+            pages.add(rdfResource.substring(rdfResource.lastIndexOf(":") + 1));
+        }
+
+        this.children = Collections.unmodifiableList(pages);
     }
 
+    /**
+     * changes model name from K4 variant into ProArc variant
+     *
+     * @param modelName name in K4 variant
+     * @param hasPrefix true if contains "model:" prefix
+     * @return modelName in ProArc variant
+     */
     public static String transformModelName(String modelName, Boolean hasPrefix) {
 
         if (hasPrefix) {
@@ -127,21 +149,42 @@ public class K4Foxml {
             return "model:" + transformModelName(modelName, false);
         }
 
-        if (modelName.equals(K4_PAGE)) return PROARC_PAGE;
-        if (modelName.equals(K4_MAP)) return PROARC_MAP;
+        if (modelName.equals(ModelDefinitions.K4_PAGE)) return ModelDefinitions.PROARC_PAGE;
+        if (modelName.equals(ModelDefinitions.K4_MAP)) return ModelDefinitions.PROARC_MAP;
 
         return null;
     }
 
-    public String getOutputFilename(String suffix) {
-        return type + "_" + String.format("%04d", index) + "_" + filename + suffix;
+    /**
+     * produces item model, counter and uuid in format "Model_Counter_UuidSuffix"
+     *
+     * @param suffix suffix to be put at the end of the name
+     * @return complete name
+     */
+    public String getOutputName(String suffix) {
+        return model + "_" + String.format("%04d", index) + "_" + UUID + suffix;
     }
 
-    public String getOutputFilename() {
-        return getOutputFilename(OUTPUT_FILE_SUFFIX);
+    /**
+     * produces item model, counter and uuid in format "Model_Counter_Uuid" with default suffix defined in OUTPUT_FILE_SUFFIX
+     *
+     * @return complete name
+     */
+    public String getOutputName() {
+        return getOutputName(OUTPUT_FILE_SUFFIX);
     }
 
-    public K4Foxml load(File file) throws IOException, SAXException, ParserConfigurationException {
-        return new K4Foxml(file);
+    public String getLabel() {
+        NodeList titles = document.getElementsByTagName("mods:titleInfo");
+
+        for (int i = 0; i < titles.getLength(); i++) {
+            Element title = (Element) titles.item(i);
+
+            if (!"alternative".equals(title.getAttribute("model"))) {
+                return title.getElementsByTagName("mods:title").item(0).getTextContent();
+            }
+        }
+
+        throw new IllegalArgumentException(Messages.METS_LABEL_NOT_FOUND + " File: " + UUID);
     }
 }

@@ -7,7 +7,7 @@ public class DocumentTemplates {
     public static final String AUDIT =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><audit:auditTrail xmlns:audit=\"info:fedora/fedora-system:def/audit#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
                     "    <audit:record ID=\"AUDREC1\">\n" +
-                    "        <audit:process type=\"Fedora API-M\"/>\n" +
+                    "        <audit:process model=\"Fedora API-M\"/>\n" +
                     "        <audit:action>ingest</audit:action>\n" +
                     "        <audit:componentID/>\n" +
                     "        <audit:responsibility>fedoraAdmin</audit:responsibility>\n" +
@@ -107,7 +107,7 @@ public class DocumentTemplates {
                 "            <xmlContent>\n" +
                 "                <audit:auditTrail xmlns:audit=\"info:fedora/fedora-system:def/audit#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\">\n" +
                 "                    <audit:record ID=\"AUDREC1\">\n" +
-                "                        <audit:process type=\"Fedora API-M\"/>\n" +
+                "                        <audit:process model=\"Fedora API-M\"/>\n" +
                 "                        <audit:action>ingest</audit:action>\n" +
                 "                        <audit:componentID/>\n" +
                 "                        <audit:responsibility>fedoraAdmin</audit:responsibility>\n" +
@@ -134,7 +134,7 @@ public class DocumentTemplates {
                 "            <xmlContent>\n" +
                 "                <oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">\n" +
                 "                    <dc:title>SupraScan A0</dc:title>\n" +
-                "                    <dc:type>proarc:device</dc:type>\n" +
+                "                    <dc:model>proarc:device</dc:model>\n" +
                 "                    <dc:identifier>device:" + uuid + "</dc:identifier>\n" +
                 "</oai_dc:dc>\n" +
                 "            </xmlContent>\n" +
@@ -200,5 +200,16 @@ public class DocumentTemplates {
                 "        </mets:div>\n" +
                 "    </mets:structMap>\n" +
                 "</mets:mets>";
+    }
+
+    public static String getDeviceStructMap(String deviceUUID) {
+        return  "        <mets:div ID=\"DIV_DEVICES\" LABEL=\"List of devices\">\n" +
+                "            <mets:div ID=\"div_device_0001\" LABEL=\"SupraScan A0 \" DMDID=\"DMD_DC_device_0001_" + deviceUUID + "\" TYPE=\"proarc:device\" CONTENTIDS=\"device:" + deviceUUID + "\">\n" +
+                "                <mets:fptr FILEID=\"FOXML_device_0001_" + deviceUUID + "\"/>\n" +
+                "                <mets:fptr FILEID=\"DESCRIPTION_device_0001_" + deviceUUID + "\"/>\n" +
+                "                <mets:fptr FILEID=\"AUDIT_device_0001_" + deviceUUID + "\"/>\n" +
+                "                <mets:fptr FILEID=\"RELS-EXT_device_0001_" + deviceUUID + "\"/>\n" +
+                "            </mets:div>\n" +
+                "        </mets:div>";
     }
 }

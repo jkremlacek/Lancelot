@@ -2,6 +2,7 @@ package cz.mzk.osdd.lancelot.device;
 
 import cz.mzk.osdd.lancelot.K4Foxml;
 import cz.mzk.osdd.lancelot.utils.DocumentTemplates;
+import cz.mzk.osdd.lancelot.utils.ModelDefinitions;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -32,6 +33,6 @@ public class DeviceMock {
     }
 
     private static File getFile(File file, String deviceUUID) {
-        return new File(file, K4Foxml.PROARC_DEVICE + "_0001_" + deviceUUID + K4Foxml.OUTPUT_FILE_SUFFIX);
+        return new File(file, ModelDefinitions.PROARC_DEVICE + "_0001_" + deviceUUID + K4Foxml.OUTPUT_FILE_SUFFIX);
     }
 }
