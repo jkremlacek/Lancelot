@@ -180,9 +180,35 @@ public class K4Foxml {
         for (int i = 0; i < titles.getLength(); i++) {
             Element title = (Element) titles.item(i);
 
+            //received label
             if (!"alternative".equals(title.getAttribute("model"))) {
                 return title.getElementsByTagName("mods:title").item(0).getTextContent();
             }
+        }
+
+        //no label was present, attempt combine page title
+
+        String pageNumber = null;
+
+        NodeList modsNumbers = document.getElementsByTagName("mods:number");
+
+        for (int i = 0; i < modsNumbers.getLength(); i++) {
+            if ("pageNumber".equals(((Element) modsNumbers.item(i).getParentNode()).getAttribute("type"))) {
+                pageNumber = modsNumbers.item(i).getTextContent();
+            }
+        }
+
+        //attempt to receive page title
+        String modsPartType = null;
+
+        try {
+            modsPartType = ((Element) document.getElementsByTagName("mods:part").item(0)).getAttribute("type");
+        } catch (NullPointerException e) {
+            throw new IllegalStateException(Messages.METS_PAGE_LABEL_NOT_FOUND);
+        }
+
+        if (pageNumber != null && modsPartType != null) {
+            return pageNumber + ", " + modsPartType;
         }
 
         throw new IllegalArgumentException(Messages.METS_LABEL_NOT_FOUND + " File: " + UUID);

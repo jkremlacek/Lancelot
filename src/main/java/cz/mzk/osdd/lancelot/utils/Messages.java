@@ -57,8 +57,9 @@ public class Messages {
 
     public static final String INVALID_OUTPUT_FORMAT = "Conversion was unable to retrieve some values.";
 
-    public static final String METS_LABEL_NOT_FOUND = "Mets primary label within mods:titleInfo not found.";
+    public static final String METS_LABEL_NOT_FOUND = "Mets label within (mods:titleInfo) or (mods:number + mods:part type) not found.";
     public static final String METS_UNSUPPORTED_DMD_TYPE = "Unsupported DMD model.";
+    public static final String METS_PAGE_LABEL_NOT_FOUND = "Mets label for page type not found.";
 
     public static final String MODEL_UNKNOWN = "Unknown ProArc model.";
     public static final String FOXML_IN_MAP_NOT_FOUND = "UUID not found within k4 map.";
@@ -66,6 +67,7 @@ public class Messages {
     public static final String PROARC_EXPORT_NOT_EXISTING = "ProArc export directory does not exist.";
 
     public static final String PROARC_EXPORT_NOTE = "Note that processing METS requires rest of the export conversion completed.";
+
 
     private static String getProcessMessage(String processName, Boolean start) {
         Calendar c = Calendar.getInstance();

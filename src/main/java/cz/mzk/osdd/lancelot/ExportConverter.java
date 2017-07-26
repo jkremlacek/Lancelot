@@ -97,9 +97,9 @@ public class ExportConverter {
         proarcArchivePack.processDescription();
         Messages.reportProcessState(Messages.PROCESS_DESCRIPTION_NAME, false);
 
-        //Messages.reportProcessState(Messages.PROCESS_FULL_NAME, true);
-        //proarcArchivePack.processFull();
-        //Messages.reportProcessState(Messages.PROCESS_FULL_NAME, false);
+        Messages.reportProcessState(Messages.PROCESS_FULL_NAME, true);
+        proarcArchivePack.processFull();
+        Messages.reportProcessState(Messages.PROCESS_FULL_NAME, false);
 
         Messages.reportProcessState(Messages.PROCESS_NDK_ARCHIVAL_NAME, true);
         proarcArchivePack.processNDKArchival();

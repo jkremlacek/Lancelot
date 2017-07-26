@@ -7,7 +7,7 @@ public class DocumentTemplates {
     public static final String AUDIT =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><audit:auditTrail xmlns:audit=\"info:fedora/fedora-system:def/audit#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
                     "    <audit:record ID=\"AUDREC1\">\n" +
-                    "        <audit:process model=\"Fedora API-M\"/>\n" +
+                    "        <audit:process type=\"Fedora API-M\"/>\n" +
                     "        <audit:action>ingest</audit:action>\n" +
                     "        <audit:componentID/>\n" +
                     "        <audit:responsibility>fedoraAdmin</audit:responsibility>\n" +
@@ -107,7 +107,7 @@ public class DocumentTemplates {
                 "            <xmlContent>\n" +
                 "                <audit:auditTrail xmlns:audit=\"info:fedora/fedora-system:def/audit#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\">\n" +
                 "                    <audit:record ID=\"AUDREC1\">\n" +
-                "                        <audit:process model=\"Fedora API-M\"/>\n" +
+                "                        <audit:process type=\"Fedora API-M\"/>\n" +
                 "                        <audit:action>ingest</audit:action>\n" +
                 "                        <audit:componentID/>\n" +
                 "                        <audit:responsibility>fedoraAdmin</audit:responsibility>\n" +
@@ -152,7 +152,7 @@ public class DocumentTemplates {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
                 "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:fedora-model=\"info:fedora/fedora-system:def/model#\" xmlns:fedora-rels-ext=\"info:fedora/fedora-system:def/relations-external#\" xmlns:foxml=\"info:fedora/fedora-system:def/foxml#\" xmlns:proarc-rels=\"http://proarc.lib.cas.cz/relations#\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
                 "    <rdf:Description rdf:about=\"info:fedora/device:" + deviceUUID + "\">\n" +
-                "        <fedora-model:hasModel rdf:resource=\"info:fedora/proarc:device:" + deviceUUID+ " \"/>\n" +
+                "        <fedora-model:hasModel rdf:resource=\"info:fedora/proarc:device\"/>\n" +
                 "    </rdf:Description>\n" +
                 "</rdf:RDF>";
     }

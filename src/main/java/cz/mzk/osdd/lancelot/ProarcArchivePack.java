@@ -102,7 +102,7 @@ public class ProarcArchivePack {
         this.krameriusExportLocation = krameriusExportLocation;
         this.proarcArchiveLocation = new File(proarcArchiveLocation, krameriusExportLocation.getName());
         
-        this.exportDirectories = new ExportDirectories(proarcArchiveLocation);
+        this.exportDirectories = new ExportDirectories(this.proarcArchiveLocation);
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         documentBuilder = dbf.newDocumentBuilder();
@@ -583,8 +583,8 @@ public class ProarcArchivePack {
 
             String textContent = FileUtils.readFileToString(source, Charset.defaultCharset());
 
-            textContent = textContent.replaceFirst("<?xml version=\"1.0\" encoding=\"UTF-8\"?>","");
-            textContent = textContent.replaceFirst("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>","");
+            textContent = textContent.replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>","");
+            textContent = textContent.replace("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>","");
 
             xmlContent.setTextContent(textContent);
 

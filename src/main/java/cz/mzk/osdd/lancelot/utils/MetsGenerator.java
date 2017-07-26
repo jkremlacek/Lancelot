@@ -36,6 +36,8 @@ public class MetsGenerator {
 
         this.root = createRootMets(outDoc);
 
+        outDoc.appendChild(this.root);
+
         createMetsHdr();
         createDmdSecs();
         createFileSecs();
@@ -56,6 +58,9 @@ public class MetsGenerator {
     private void createStructMaps() {
         //physical
         Element structMap = outDoc.createElement("mets:structMap");
+
+        structMap.setAttribute("TYPE", "PHYSICAL");
+        structMap.setAttribute("LABEL", "Physical Structure");
 
         createMetsDiv(structMap, rootFoxml);
 
@@ -103,7 +108,7 @@ public class MetsGenerator {
         Element fileSec = outDoc.createElement("mets:fileSec");
         root.appendChild(fileSec);
 
-        processFileGrp("AUDIT", exportDirectories.AUDIT_DIR, fileSec, ExportDirectories.AUDIT_MIMETYPE);
+        processFileGrp(ModelDefinitions.AUDIT, exportDirectories.AUDIT_DIR, fileSec, ExportDirectories.AUDIT_MIMETYPE);
         processFileGrp("RELS-EXT", exportDirectories.RELS_EXT_DIR, fileSec, ExportDirectories.RELS_EXT_MIMETYPE);
         processFileGrp("FOXML", exportDirectories.FOXML_DIR, fileSec, ExportDirectories.FOXML_MIMETYPE);
         processFileGrp("RAW", exportDirectories.RAW_DIR, fileSec, ExportDirectories.RAW_MIMETYPE);
@@ -133,7 +138,7 @@ public class MetsGenerator {
         for (File file : files) {
             Element metsFile = outDoc.createElement("mets:file");
 
-            metsFile.setAttribute("ID", FilenameUtils.removeExtension(file.getName()));
+            metsFile.setAttribute("ID",name + "_" + FilenameUtils.removeExtension(file.getName()));
             metsFile.setAttribute("MIMETYPE", mimetype);
             metsFile.setAttribute("SIZE", Long.toString(file.length()));
             metsFile.setAttribute("CREATED", rootFoxml.createdDate);
@@ -158,6 +163,13 @@ public class MetsGenerator {
         for (Map.Entry<String, K4Foxml> foxml : k4FoxmlMap.entrySet()) {
             String mods = retreiveStringSegmentFromFoxml(foxml.getValue(), "mods:mods");
 
+            String modsNS = " xmlns:mods=\"http://www.loc.gov/mods/v3\" ";
+
+            if (!mods.contains(modsNS)) {
+                int splitPos = "mods:mods ".length();
+                mods = mods.substring(0, splitPos) + modsNS + mods.substring(splitPos, mods.length());
+            }
+
             createDmdSecWithContent(foxml.getValue(), "text/xml", MDType.MODS, mods);
 
             String dc = retreiveStringSegmentFromFoxml(foxml.getValue(), "oai_dc:dc");
@@ -169,7 +181,7 @@ public class MetsGenerator {
     private String retreiveStringSegmentFromFoxml(K4Foxml foxml, String tagName) throws IOException {
         String xml = FileUtils.readFileToString(foxml.originalSource, Charset.defaultCharset());
 
-        int start = xml.indexOf("<" + tagName);
+        int start = xml.indexOf("<" + tagName + " ");
 
         String endingTag = "</" + tagName + ">";
 
@@ -209,6 +221,7 @@ public class MetsGenerator {
                 throw new IllegalArgumentException(Messages.METS_UNSUPPORTED_DMD_TYPE);
         }
 
+        dmdSec.appendChild(mdWrap);
         dmdSec.setAttribute("CREATED", foxml.createdDate);
 
         root.appendChild(dmdSec);
@@ -233,7 +246,7 @@ public class MetsGenerator {
 
         metsHdr.setAttribute("CREATEDATE", rootFoxml.createdDate);
 
-        outDoc.appendChild(metsHdr);
+        root.appendChild(metsHdr);
 
         Element metsAgent = outDoc.createElement("mets:agent");
 
